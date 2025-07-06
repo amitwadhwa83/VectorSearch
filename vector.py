@@ -3,6 +3,29 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import re
 
+class VectorDB:
+    def __init__(self, embeddings):
+        self.embeddings = embeddings
+        self.documents = []
+        self.vectors = []
+
+    def add_document(self, doc):
+        vec = sentence_to_vector(doc, self.embeddings)
+        self.documents.append(doc)
+        self.vectors.append(vec)
+
+    def search(self, query, top_k=3):
+        query_vec = sentence_to_vector(query, self.embeddings)
+        similarities = [cosine_similarity(query_vec, v) for v in self.vectors]
+        ranked_indices = np.argsort(similarities)[::-1][:top_k]
+        return [
+            (self.documents[i], similarities[i])
+            for i in ranked_indices
+            if similarities[i] > 0
+        ]
+
+
+
 # Toy dataset of sentences
 documents = [
     "Machine learning is powerful",
@@ -113,3 +136,16 @@ def plot_vectors(doc_vectors, documents, query, query_vector):
 # Generate the plot
 query_vector = sentence_to_vector(query, word_embeddings)
 plot_vectors(doc_vectors, documents, query, query_vector)
+
+print("==========================================================")
+# Usage of VectorDB class
+vector_db = VectorDB(word_embeddings)
+for doc in documents:
+    vector_db.add_document(doc)
+
+query = "Machine learning technology"
+results = vector_db.search(query)
+print("Query:", query)
+print("Top results:")
+for doc, score in results:
+    print(f"Score: {score:.3f}, Document: {doc}")
